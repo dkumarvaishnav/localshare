@@ -1,12 +1,25 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.exception_handlers import http_exception_handler
 from app.router import router, cleanup_shares
 import os
 import asyncio
 from app.config import UPLOAD_DIR
 
 app = FastAPI(title="LocalShare")
+
+templates = Jinja2Templates(directory="app/templates")
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 410:
+        return templates.TemplateResponse(
+            "error.html", 
+            {"request": request, "message": exc.detail}, 
+            status_code=410
+        )
+    return await http_exception_handler(request, exc)
 
 async def cleanup_task():
     while True:

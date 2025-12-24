@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Error - LocalShare{% endblock %}
+
+{% block content %}
+<div class="result-box" style="max-width: 500px; margin: 40px auto; text-align: center;">
+    <div style="font-size: 64px; margin-bottom: 20px;">🚫</div>
+    <h2 style="color: #ef4444; margin-bottom: 15px;">Link Unavailable</h2>
+    <p style="font-size: 1.1em; color: var(--text-muted); margin-bottom: 30px;">
+        {{ message }}
+    </p>
+    <a href="/" class="btn primary">Share New Files</a>
+</div>
+{% endblock %}

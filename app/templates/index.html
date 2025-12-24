@@ -42,7 +42,7 @@
     <p>Send this link to the receiver:</p>
     <div class="link-box">
         <input type="text" id="share-link" readonly>
-        <button class="btn secondary" onclick="copyLink()">Copy</button>
+        <button id="copy-btn" class="btn secondary" onclick="copyLink()">Copy</button>
     </div>
     
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -210,10 +210,21 @@
 
     function copyLink() {
         const copyText = document.getElementById("share-link");
+        const copyBtn = document.getElementById("copy-btn");
+        
         copyText.select();
         document.execCommand("copy");
         // Or navigator.clipboard.writeText(copyText.value);
-        alert("Link copied!");
+        
+        // Show feedback
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "Copied!";
+        copyBtn.style.backgroundColor = "var(--success)";
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.backgroundColor = ""; // Revert to default
+        }, 1500);
     }
 </script>
 {% endblock %}
