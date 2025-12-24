@@ -34,7 +34,12 @@
         <ul id="file-list"></ul>
         <button type="submit" class="btn success" id="share-btn" disabled>Share Files</button>
     </form>
-    <div id="progress" class="hidden">Uploading...</div>
+    <div id="progress" class="hidden" style="margin-top: 20px;">
+        <div style="background: #e2e8f0; border-radius: 6px; height: 10px; overflow: hidden;">
+            <div id="progress-bar" style="background: var(--primary); width: 0%; height: 100%; transition: width 0.2s;"></div>
+        </div>
+        <p id="progress-text" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: var(--text-muted);">Uploading: 0%</p>
+    </div>
 </div>
 
 <div id="result" class="hidden result-box">
@@ -59,6 +64,11 @@
     const uploadForm = document.getElementById('upload-form');
     const minutesInput = document.getElementById('minutes');
     const modeRadios = document.getElementsByName('mode');
+    
+    // Progress elements
+    const progressDiv = document.getElementById('progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
 
     let selectedFiles = [];
     let currentToken = null;
@@ -119,7 +129,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    uploadForm.addEventListener('submit', async (e) => {
+    uploadForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (selectedFiles.length === 0) return;
 
@@ -145,15 +155,26 @@
 
         shareBtn.disabled = true;
         shareBtn.textContent = 'Uploading...';
+        
+        // Show progress UI
+        progressDiv.classList.remove('hidden');
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Uploading: 0%';
 
-        try {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload', true);
 
-            if (response.ok) {
-                const data = await response.json();
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentComplete + '%';
+                progressText.textContent = 'Uploading: ' + percentComplete + '%';
+            }
+        };
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
                 currentToken = data.token;
                 
                 document.getElementById('upload-form').classList.add('hidden');
@@ -167,18 +188,23 @@
                 } else {
                     expiryInfo.textContent = "Status: Active (Manual revocation)";
                 }
-                
             } else {
                 alert('Upload failed');
                 shareBtn.disabled = false;
                 shareBtn.textContent = 'Share Files';
+                progressDiv.classList.add('hidden');
             }
-        } catch (error) {
-            console.error('Error:', error);
+        };
+
+        xhr.onerror = function() {
+            console.error('Network Error');
             alert('An error occurred');
             shareBtn.disabled = false;
             shareBtn.textContent = 'Share Files';
-        }
+            progressDiv.classList.add('hidden');
+        };
+
+        xhr.send(formData);
     });
 
     document.getElementById('revoke-btn').addEventListener('click', async () => {
