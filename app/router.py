@@ -153,33 +153,42 @@ async def upload_files(files: List[UploadFile] = File(...), duration: str = Form
     print("="*60)
     return {"link": share_link, "token": token, "files": file_metadata, "expires_at": meta['expires_at']}
 
+def format_size(size_bytes):
+    """Formats bytes into a human-readable string."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
 @router.get("/share/{token}", response_class=HTMLResponse)
 async def get_receiver_ui(request: Request, token: str):
     token_dir = os.path.join(UPLOAD_DIR, token)
     check_share_validity(token_dir)
     
     files = []
+    total_bytes = 0
     for filename in os.listdir(token_dir):
         if filename == "meta.json": continue
         
         file_path = os.path.join(token_dir, filename)
         if os.path.isfile(file_path):
             size_bytes = os.path.getsize(file_path)
-            # Simple human readable size
-            if size_bytes < 1024:
-                 size_str = f"{size_bytes} B"
-            elif size_bytes < 1024 * 1024:
-                size_str = f"{size_bytes / 1024:.1f} KB"
-            else:
-                 size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+            total_bytes += size_bytes
             
             files.append({
                 "name": filename,
-                "size": size_str,
+                "size": format_size(size_bytes),
                 "url": f"/download/{token}/{filename}"
             })
             
-    return templates.TemplateResponse("share.html", {"request": request, "token": token, "files": files})
+    return templates.TemplateResponse("share.html", {
+        "request": request, 
+        "token": token, 
+        "files": files,
+        "total_size": format_size(total_bytes)
+    })
 
 @router.get("/download-all/{token}")
 async def download_all_files(token: str):
