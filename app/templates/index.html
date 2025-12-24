@@ -7,8 +7,30 @@
         <h3>Select files to share</h3>
         <p>Drag and drop files here, or click to browse</p>
         <input type="file" id="file-input" multiple required hidden>
-        <button type="button" class="btn primary" onclick="document.getElementById('file-input').click()">Browse
-            Files</button>
+        
+        <div style="margin: 20px 0; text-align: left;">
+            <div style="margin-bottom: 8px;">
+                <label style="cursor: pointer; display: flex; align-items: center;">
+                    <input type="radio" name="mode" value="manual" checked style="margin-right: 8px;">
+                    Manual revoking
+                </label>
+            </div>
+            <div>
+                <label style="cursor: pointer; display: flex; align-items: center;">
+                    <input type="radio" name="mode" value="auto" style="margin-right: 8px;">
+                    Revoke automatically after
+                    <input type="number" id="minutes" min="1" max="1440" step="1" value="10" 
+                           style="width: 60px; margin: 0 5px; padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px;" 
+                           disabled>
+                    minutes
+                </label>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+             <button type="button" class="btn primary" onclick="document.getElementById('file-input').click()">Browse Files</button>
+        </div>
+
         <ul id="file-list"></ul>
         <button type="submit" class="btn success" id="share-btn" disabled>Share Files</button>
     </form>
@@ -22,6 +44,11 @@
         <input type="text" id="share-link" readonly>
         <button class="btn secondary" onclick="copyLink()">Copy</button>
     </div>
+    
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <p id="expiry-info" style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;"></p>
+        <button id="revoke-btn" class="btn" style="background-color: #ef4444; color: white; width: 100%;">Revoke Link Now</button>
+    </div>
 </div>
 
 <script>
@@ -30,7 +57,23 @@
     const fileList = document.getElementById('file-list');
     const shareBtn = document.getElementById('share-btn');
     const uploadForm = document.getElementById('upload-form');
+    const minutesInput = document.getElementById('minutes');
+    const modeRadios = document.getElementsByName('mode');
+
     let selectedFiles = [];
+    let currentToken = null;
+
+    // Radio button logic
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'auto') {
+                minutesInput.disabled = false;
+                minutesInput.focus();
+            } else {
+                minutesInput.disabled = true;
+            }
+        });
+    });
 
     // Drag & Drop
     dropZone.addEventListener('dragover', (e) => {
@@ -80,10 +123,25 @@
         e.preventDefault();
         if (selectedFiles.length === 0) return;
 
+        // Determine duration
+        let duration = 'manual';
+        const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+        
+        if (selectedMode === 'auto') {
+            const mins = minutesInput.value;
+            if (!mins || mins < 1) {
+                alert("Please enter a valid number of minutes.");
+                minutesInput.focus();
+                return;
+            }
+            duration = mins;
+        }
+
         const formData = new FormData();
         selectedFiles.forEach(file => {
             formData.append('files', file);
         });
+        formData.append('duration', duration);
 
         shareBtn.disabled = true;
         shareBtn.textContent = 'Uploading...';
@@ -96,9 +154,20 @@
 
             if (response.ok) {
                 const data = await response.json();
+                currentToken = data.token;
+                
                 document.getElementById('upload-form').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
                 document.getElementById('share-link').value = data.link;
+                
+                const expiryInfo = document.getElementById('expiry-info');
+                if (data.expires_at) {
+                    const expiryDate = new Date(data.expires_at);
+                    expiryInfo.textContent = `Expires: ${expiryDate.toLocaleTimeString()} (${expiryDate.toLocaleDateString()})`;
+                } else {
+                    expiryInfo.textContent = "Status: Active (Manual revocation)";
+                }
+                
             } else {
                 alert('Upload failed');
                 shareBtn.disabled = false;
@@ -109,6 +178,33 @@
             alert('An error occurred');
             shareBtn.disabled = false;
             shareBtn.textContent = 'Share Files';
+        }
+    });
+
+    document.getElementById('revoke-btn').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to revoke this link immediately? The receiver will no longer be able to download files.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/revoke/${currentToken}`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                document.getElementById('result').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h3 style="color: #ef4444;">Link Revoked</h3>
+                        <p>The share link is no longer active.</p>
+                        <button class="btn primary" onclick="location.reload()">Share More Files</button>
+                    </div>
+                `;
+            } else {
+                alert("Failed to revoke link.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error revoking link.");
         }
     });
 
