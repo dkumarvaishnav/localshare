@@ -7,6 +7,20 @@
     --text-main: #1e293b;
     --text-muted: #64748b;
     --border: #e2e8f0;
+    --input-bg: #ffffff;
+    --input-text: #1e293b;
+    --dragover-bg: #eff6ff;
+}
+
+body.dark {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --input-bg: #0f172a;
+    --input-text: #f1f5f9;
+    --dragover-bg: #334155;
 }
 
 body {
@@ -28,6 +42,7 @@ body {
 header {
     text-align: center;
     margin-bottom: 40px;
+    margin-top: 10px;
 }
 
 h1 {
@@ -35,9 +50,44 @@ h1 {
     font-weight: 600;
 }
 
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+#darkModeToggle {
+    border: none;
+    background: transparent;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--text-main);
+    transition: background-color 0.2s;
+}
+
+#darkModeToggle:hover {
+    background-color: var(--border);
+}
+
 .subtitle {
     color: var(--text-muted);
     margin: 0;
+}
+
+/* Global Input Styles */
+input, select {
+    background-color: var(--input-bg);
+    color: var(--input-text);
 }
 
 .upload-area {
@@ -51,7 +101,7 @@ h1 {
 
 .upload-area.dragover {
     border-color: var(--primary);
-    background-color: #eff6ff;
+    background-color: var(--dragover-bg);
 }
 
 .icon {
@@ -135,6 +185,8 @@ h1 {
     border: 1px solid var(--border);
     border-radius: 6px;
     font-family: monospace;
+    background-color: var(--input-bg);
+    color: var(--input-text);
 }
 
 /* Receiver UI */

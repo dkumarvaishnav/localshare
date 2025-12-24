@@ -11,8 +11,11 @@
 </head>
 <body>
     <div class="container">
+        <div class="top-bar">
+            <div class="app-title"><a href="/" style="text-decoration: none; color: inherit;">LocalShare</a></div>
+            <button id="darkModeToggle" type="button">🌙</button>
+        </div>
         <header>
-            <h1><a href="/" style="text-decoration: none; color: inherit;">LocalShare</a></h1>
             <p class="subtitle">Fast, direct file sharing from your machine.</p>
         </header>
         <main>
@@ -22,5 +25,23 @@
             <p>Temporary file sharing. Files are stored locally.</p>
         </footer>
     </div>
+    <script>
+        const toggleBtn = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Load preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.add('dark');
+            toggleBtn.textContent = '☀️';
+        }
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            body.classList.toggle('dark');
+            const isDark = body.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark);
+            toggleBtn.textContent = isDark ? '☀️' : '🌙';
+        });
+    </script>
 </body>
 </html>
