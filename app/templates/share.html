@@ -5,16 +5,20 @@
 {% block content %}
 <div class="download-container">
     <h2>Files Shared With You</h2>
+    {% if files %}
+    <div style="margin-bottom: 20px;">
+        <a href="/download-all/{{ token }}" class="btn primary" style="display: block; text-align: center;">Download All Files (.zip)</a>
+    </div>
+    {% endif %}
     <div class="file-list-container">
         {% if files %}
         <ul class="receiver-file-list">
             {% for file in files %}
-            <li class="file-item">
-                <div class="file-info">
-                    <span class="file-name">{{ file.name }}</span>
-                    <span class="file-size">{{ file.size }}</span>
+            <li class="file-row">
+                <div class="file-name" title="{{ file.name }}">
+                    {{ file.name }} <span class="file-size-text">({{ file.size }})</span>
                 </div>
-                <a href="{{ file.url }}" class="btn download-btn">Download</a>
+                <a href="{{ file.url }}" class="download-button btn download-btn">Download</a>
             </li>
             {% endfor %}
         </ul>

@@ -2,9 +2,11 @@ import os
 import shutil
 import uuid
 import aiofiles
+import io
+import zipfile
 from typing import List
 from fastapi import APIRouter, UploadFile, File, Request, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from app.config import UPLOAD_DIR
 
@@ -88,6 +90,28 @@ async def get_receiver_ui(request: Request, token: str):
             })
             
     return templates.TemplateResponse("share.html", {"request": request, "token": token, "files": files})
+
+@router.get("/download-all/{token}")
+async def download_all_files(token: str):
+    token_dir = os.path.join(UPLOAD_DIR, token)
+    if not os.path.exists(token_dir):
+        raise HTTPException(status_code=404, detail="Invalid or expired link")
+    
+    # Create in-memory zip
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for filename in os.listdir(token_dir):
+            file_path = os.path.join(token_dir, filename)
+            if os.path.isfile(file_path):
+                zip_file.write(file_path, arcname=filename)
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=shared_files.zip"}
+    )
 
 @router.get("/download/{token}/{filename}")
 async def download_file(token: str, filename: str):
