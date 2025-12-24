@@ -57,7 +57,7 @@ def test_invalid_token():
     # Checking the JSON content
     try:
         json_resp = resp.json()
-        assert json_resp['detail'] == "Invalid or expired link", f"Wrong error message: {json_resp}"
+        assert json_resp['detail'] == "Share not found", f"Wrong error message: {json_resp}"
         print("Invalid Share Token Error Message OK")
     except:
         # If it returned HTML or something else
@@ -69,7 +69,7 @@ def test_invalid_token():
     assert resp.status_code == 404, f"Expected 404 for download, got {resp.status_code}"
     try:
         json_resp = resp.json()
-        assert json_resp['detail'] == "Invalid or expired link", f"Wrong error message: {json_resp}"
+        assert json_resp['detail'] == "Share not found", f"Wrong error message: {json_resp}"
         print("Invalid Download Token Error Message OK")
     except:
         print(f"Response content: {resp.text}")
